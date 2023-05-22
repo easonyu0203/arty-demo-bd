@@ -2,6 +2,28 @@
   <profile version="1.0">
     <option name="myName" value="Project Default" />
     <inspection_tool class="Eslint" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyPackageRequirementsInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredPackages">
+        <value>
+          <list size="1">
+            <item index="0" class="java.lang.String" itemvalue="colorama" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
     <inspection_tool class="PyPep8NamingInspection" enabled="true" level="INFORMATION" enabled_by_default="true" />
+    <inspection_tool class="PyUnresolvedReferencesInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoredIdentifiers">
+        <list>
+          <option value="cv2.destroyAllWindows" />
+          <option value="cv2.waitKey" />
+          <option value="cv2.imshow" />
+          <option value="cv2.VideoCapture" />
+          <option value="cv2.CAP_PROP_FRAME_WIDTH" />
+          <option value="cv2.CAP_PROP_FRAME_HEIGHT" />
+          <option value="cv2.imencode" />
+        </list>
+      </option>
+    </inspection_tool>
   </profile>
 </component>

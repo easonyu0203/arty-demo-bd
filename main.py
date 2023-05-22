@@ -1,5 +1,7 @@
 import base64
 from io import BytesIO
+from typing import List
+
 import PIL
 from PIL import Image
 
@@ -9,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from transformers import pipeline
 
-model_checkpoint = "facebook/convnext-base-224"
+# model_checkpoint = "facebook/convnext-base-224"
 model_checkpoint = "eason0203/swin-tiny-patch4-window7-224-finetuned-arty"
 bg_model_checkpoint = "eason0203/swin-tiny-patch4-window7-224-arty-bg-classifier"
 
@@ -30,15 +32,15 @@ app.add_middleware(
 )
 
 
-class Base64Image(BaseModel):
-    data_url: str
+class PredictRequestDto(BaseModel):
+    base64_img: str
 
 
 class SetModelDto(BaseModel):
     model_name: str
 
 
-class Prediction(BaseModel):
+class PredictDto(BaseModel):
     score: float
     label: str
 
@@ -69,26 +71,26 @@ async def post_test(set_model_dto: SetModelDto):
     return JSONResponse(content={"message": f"set model to {set_model_dto.model_name} successfully!"})
 
 
-@app.post("/predict")
-async def predict(base64_image: Base64Image):
+@app.post("/predict", response_model=List[PredictDto])
+async def predict(base64_image: PredictRequestDto):
     global pipe, bg_pipe
 
     # Extract the base64-encoded image data
-    image_data = base64.b64decode(base64_image.data_url.split(",")[1])
+    image_data = base64.b64decode(base64_image.base64_img.split(",")[1])
 
     # Load the image data into a PIL Image object
     try:
         image = Image.open(BytesIO(image_data))
     except PIL.UnidentifiedImageError:
-        return JSONResponse(content=[])
+        return []
 
     # Run the image through the pre-trained model
-    predictions: List[Prediction] = pipe(image)
-    bg_predictions: List[Prediction] = bg_pipe(image)
+    predictions: List[PredictDto] = pipe(image)
+    bg_predictions: List[PredictDto] = bg_pipe(image)
 
     is_bg = [v for v in bg_predictions if v['label'] == "bg"]
 
     # append at the start
     predictions = is_bg + predictions
 
-    return JSONResponse(content=predictions)
+    return predictions[:4]
