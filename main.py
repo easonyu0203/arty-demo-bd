@@ -11,13 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from transformers import pipeline
 
-# model_checkpoint = "facebook/convnext-base-224"
-model_checkpoint = "eason0203/swin-tiny-patch4-window7-224-finetuned-arty"
-bg_model_checkpoint = "eason0203/swin-tiny-patch4-window7-224-arty-bg-classifier"
+model_checkpoint = "facebook/convnext-base-224"
+# model_checkpoint = "eason0203/swin-tiny-patch4-window7-224-finetuned-arty"
+# bg_model_checkpoint = "eason0203/swin-tiny-patch4-window7-224-arty-bg-classifier"
 
 
 pipe = pipeline("image-classification", model_checkpoint, device=-1)
-bg_pipe = pipeline("image-classification", bg_model_checkpoint, device=-1)
+# bg_pipe = pipeline("image-classification", bg_model_checkpoint, device=-1)
 
 app = FastAPI()
 
@@ -62,7 +62,7 @@ async def post_test():
 
 @app.post("/set-model")
 async def post_test(set_model_dto: SetModelDto):
-    global pipe, bg_pipe
+    global pipe
     try:
         pipe = pipeline("image-classification",
                         set_model_dto.model_name, device=-1)
@@ -73,7 +73,7 @@ async def post_test(set_model_dto: SetModelDto):
 
 @app.post("/predict", response_model=List[PredictDto])
 async def predict(base64_image: PredictRequestDto):
-    global pipe, bg_pipe
+    global pipe
 
     # Extract the base64-encoded image data
     image_data = base64.b64decode(base64_image.base64_img.split(",")[1])
@@ -86,11 +86,9 @@ async def predict(base64_image: PredictRequestDto):
 
     # Run the image through the pre-trained model
     predictions: List[PredictDto] = pipe(image)
-    bg_predictions: List[PredictDto] = bg_pipe(image)
-
-    is_bg = [v for v in bg_predictions if v['label'] == "bg"]
 
     # append at the start
-    predictions = is_bg + predictions
+    for p in predictions:
+        p['label'] = p['label'].split(", ")[0]
 
-    return predictions[:4]
+    return predictions
